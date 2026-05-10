@@ -97,8 +97,11 @@ AdvancedSettingsWidget::AdvancedSettingsWidget(SettingsWindow* settings_dialog, 
 		   "access occurred."));
 
 	dialog()->registerWidgetHelp(m_ui.extraMemory, tr("Enable Extended RAM (Dev Console)"), tr("Unchecked"),
-		tr("Exposes additional memory to the virtual machine, expanding the EE and IOP memory to 128MB and 8MB respectively."));
-
+		tr("Exposes additional memory to the virtual machine, expanding the EE and IOP memory to 128MB and 8MB respectively. " // <LL> Added extra info regarding how this impacts patches in PCSX2-Sanity.
+		   "<br>Will also automatically load any '[TOOL]' patches, since they are intended to be used together. "
+		   "<br>On top of that, if the settings permit it, and such patches exist, the 'TOOL' versions of Widescreen and No-Interlacing patches will be loaded. "
+		   "The TOOL-less versions won't be loaded, as they may corrupt the game memory in this situation - unless you specifically force them."));
+				   		      		   
 	dialog()->registerWidgetHelp(m_ui.vu0RoundingMode, tr("VU0 Rounding Mode"), tr("Chop/Zero (Default)"), tr("Changes how PCSX2 handles rounding while emulating the Emotion Engine's Vector Unit 0 (EE VU0). "
 																											  "The default value handles the vast majority of games; <b>modifying this setting when a game is not having a visible problem will cause stability issues and/or crashes.</b>"));
 

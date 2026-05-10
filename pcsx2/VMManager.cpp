@@ -732,7 +732,7 @@ void VMManager::ApplyGameFixes()
 		return;
 	}
 
-	const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_disc_serial);
+	const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_disc_serial, fmt::format("{:08X}", s_disc_crc)); // <LL>
 	if (!game)
 		return;
 
@@ -1087,7 +1087,7 @@ void VMManager::UpdateDiscDetails(bool booting)
 		std::string custom_title = GameList::GetCustomTitleForPath(CDVDsys_GetFile(CDVDsys_GetSourceType()));
 		if (serial_is_valid)
 		{
-			if (const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_disc_serial))
+			if (const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_disc_serial, fmt::format("{:08X}", s_disc_crc))) // <LL>
 			{
 				if (!game->name_en.empty())
 				{
@@ -2891,6 +2891,8 @@ void VMManager::Internal::EntryPointCompilingOnCPUThread()
 		PerformanceMetrics::Reset();
 	}
 
+	// vtlb_VMap(0x02000000, 0x02000000, 0x06000000); // <LL> Honestly not sure what this was for, will leave it here commented out in case we need it for something later.
+
 	HandleELFChange(true);
 
 	Patch::ApplyBootPatches();
@@ -3076,7 +3078,7 @@ void VMManager::CheckForMemoryCardConfigChanges(const Pcsx2Config& old_config)
 	std::string sioSerial;
 	{
 		std::unique_lock lock(s_info_mutex);
-		if (const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_disc_serial))
+		if (const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_disc_serial, fmt::format("{:08X}", s_disc_crc))) // <LL>
 			sioSerial = game->memcardFiltersAsString();
 		if (sioSerial.empty())
 			sioSerial = s_disc_serial;

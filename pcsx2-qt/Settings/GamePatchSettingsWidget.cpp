@@ -87,8 +87,10 @@ GamePatchSettingsWidget::GamePatchSettingsWidget(SettingsWindow* settings_dialog
 	connect(m_ui.allCRCsCheckbox, &QCheckBox::checkStateChanged, this, &GamePatchSettingsWidget::reloadList);
 	connect(dialog(), &SettingsWindow::discSerialChanged, this, &GamePatchSettingsWidget::reloadList);
 
-	dialog()->registerWidgetHelp(m_ui.allCRCsCheckbox, tr("Show Patches For All CRCs"), tr("Checked"),
-		tr("Toggles scanning patch files for all CRCs of the game. With this enabled available patches for the game serial with different CRCs will also be loaded."));
+	dialog()->registerWidgetHelp(m_ui.allCRCsCheckbox, tr("Show Patches For All CRCs"), tr("Checked"), // <LL> Added notice about the forced disabling of this setting.
+		tr("Toggles scanning patch files for all CRCs of the game. With this enabled available patches for the game serial with different CRCs will also be loaded. "
+		   "<br>WARNING: This setting is intentionally ignored in PCSX2-Sanity, it will always act as if it was disabled. It was causing more issues than it was helping. "
+		   "In our case, most pre-release Jak builds get the serial 'X', so from this setting's perspective they were all the exact same games. Which was wrong."));
 
 	reloadList();
 }
@@ -153,6 +155,18 @@ void GamePatchSettingsWidget::reloadList()
 				first = false;
 			}
 
+			bool highlight = false;
+
+			// <LL> The values for 'pi.name' need to match the values that are specified in Patch.cpp, because I am too fool to make a constant or something.
+			if ((pi.name == "Widescreen 16:9" && (EmuConfig.EnableWideScreenPatches && !EmuConfig.Cpu.ExtraMemory)) ||
+				(pi.name == "Widescreen 16:9 TOOL" && (EmuConfig.EnableWideScreenPatches && EmuConfig.Cpu.ExtraMemory)) ||
+				(pi.name == "No-Interlacing" && (EmuConfig.EnableNoInterlacingPatches && !EmuConfig.Cpu.ExtraMemory)) ||
+				(pi.name == "No-Interlacing TOOL" && (EmuConfig.EnableNoInterlacingPatches && EmuConfig.Cpu.ExtraMemory)) ||
+				(pi.name == "TOOL" && EmuConfig.Cpu.ExtraMemory))
+			{
+				highlight = true;
+			}
+
 			const bool is_on_enable_list = std::find(enabled_list.begin(), enabled_list.end(), pi.name) != enabled_list.end();
 			const bool is_on_disable_list = std::find(disabled_list.begin(), disabled_list.end(), pi.name) != disabled_list.end();
 			const bool globally_toggleable_option = Patch::IsGloballyToggleablePatch(pi);
@@ -182,6 +196,12 @@ void GamePatchSettingsWidget::reloadList()
 
 			GamePatchDetailsWidget* it =
 				new GamePatchDetailsWidget(pi, globally_toggleable_option, check_state, dialog(), container);
+
+			if (highlight) // <LL> Apply the highlight, if applicable.
+			{
+				it->setStyleSheet("background-color:green;");
+			}
+
 			layout->addWidget(it);
 		}
 	}

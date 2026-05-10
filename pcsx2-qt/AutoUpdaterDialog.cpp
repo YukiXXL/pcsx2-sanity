@@ -63,8 +63,8 @@ static constexpr u32 HTTP_POLL_INTERVAL = 10;
 #define UPDATE_ADDITIONAL_TAGS "SSE4"
 #endif
 
-#define LATEST_RELEASE_URL "https://api.pcsx2.net/v1/%1Releases?pageSize=1"
-#define CHANGES_URL "https://api.github.com/repos/PCSX2/pcsx2/compare/%1...%2"
+#define LATEST_RELEASE_URL "https://api.github.com/repos/LuminarLight/pcsx2-sanity/releases/latest" // <LL>
+#define CHANGES_URL "https://api.github.com/repos/LuminarLight/pcsx2-sanity/compare/%1...%2" // <LL>
 
 // Available release channels.
 static const char* UPDATE_TAGS[] = {"stable", "nightly"};
@@ -232,78 +232,186 @@ void AutoUpdaterDialog::getLatestReleaseComplete(s32 status_code, std::vector<u8
 
 	bool found_update_info = false;
 
-	if (status_code == HTTPDownloader::HTTP_STATUS_OK)
+    if (status_code == HTTPDownloader::HTTP_STATUS_OK)
 	{
 		QJsonParseError parse_error;
 		QJsonDocument doc(QJsonDocument::fromJson(QByteArray(reinterpret_cast<const char*>(data.data()), data.size()), &parse_error));
 		if (doc.isObject())
 		{
 			const QJsonObject doc_object(doc.object());
-			const QJsonArray data_array(doc_object["data"].toArray());
-			if (!data_array.isEmpty())
+
+			// <LL> Support both PCSX2's secret custom API, and GitHub API. Their structures differ so it is easy to tell them apart.
+			if (doc_object.contains("data") && doc_object["data"].isArray())
 			{
-				// just take the first one, that's all we requested anyway
-				const QJsonObject data_object(data_array.first().toObject());
-				const QJsonObject assets_object(data_object["assets"].toObject());
-				const QJsonArray platform_array(assets_object[UPDATE_PLATFORM_STR].toArray());
-				if (!platform_array.isEmpty())
+				const QJsonArray data_array(doc_object["data"].toArray());
+				if (!data_array.isEmpty())
+				{
+					// just take the first one, that's all we requested anyway
+					const QJsonObject data_object(data_array.first().toObject());
+					const QJsonObject assets_object(data_object["assets"].toObject());
+					const QJsonArray platform_array(assets_object[UPDATE_PLATFORM_STR].toArray());
+					if (!platform_array.isEmpty())
+					{
+						QJsonObject best_asset;
+						int best_asset_score = 0;
+
+						// search for usable files
+						for (const QJsonValue& asset_value : platform_array)
+						{
+							const QJsonObject asset_object(asset_value.toObject());
+							const QJsonArray additional_tags_array(asset_object["additionalTags"].toArray());
+							bool is_symbols = false;
+							bool is_installer = false;
+							bool is_avx2 = false;
+							bool is_sse4 = false;
+							bool is_perfect_match = false;
+							for (const QJsonValue& additional_tag : additional_tags_array)
+							{
+								const QString additional_tag_str(additional_tag.toString());
+								if (additional_tag_str == QStringLiteral("symbols"))
+								{
+									// we're not interested in symbols downloads
+									is_symbols = true;
+									break;
+								}
+								if (additional_tag_str == QStringLiteral("installer"))
+								{
+									// we're not interested in installer download
+									is_installer = true;
+									break;
+								}
+								else if (additional_tag_str == QStringLiteral("SSE4"))
+								{
+									is_sse4 = true;
+								}
+								else if (additional_tag_str == QStringLiteral("AVX2"))
+								{
+									is_avx2 = true;
+								}
+#ifdef UPDATE_ADDITIONAL_TAGS
+								if (additional_tag_str == QStringLiteral(UPDATE_ADDITIONAL_TAGS))
+								{
+									// Found the same variant as what's currently running!  But keep checking in case it's symbols.
+									is_perfect_match = true;
+								}
+#endif
+							}
+
+							if (is_symbols)
+							{
+								// skip this asset
+								continue;
+							}
+
+							if (is_installer)
+							{
+								// skip this asset
+								continue;
+							}
+#ifdef _M_X86
+							if (is_avx2 && cpuinfo_has_x86_avx2())
+							{
+								// skip this asset
+								continue;
+							}
+#endif
+
+							int score;
+							if (is_perfect_match)
+								score = 4; // #1 choice is the one matching this binary
+							else if (is_avx2)
+								score = 3; // Prefer AVX2 over SSE4 (support test was done above)
+							else if (is_sse4)
+								score = 2; // Prefer SSE4 over one with no tags at all
+							else
+								score = 1; // Multi-ISA builds will have no tags, they'll only get picked because they're the only available build
+
+							if (score > best_asset_score)
+							{
+								best_asset = std::move(asset_object);
+								best_asset_score = score;
+							}
+						}
+
+						if (best_asset_score == 0)
+						{
+							reportError("no matching assets found");
+						}
+						else
+						{
+							m_latest_version = data_object["version"].toString();
+							m_latest_version_timestamp = QDateTime::fromString(data_object["publishedAt"].toString(), QStringLiteral("yyyy-MM-ddThh:mm:ss.zzzZ"));
+							m_download_url = best_asset["url"].toString();
+							m_download_size = best_asset["size"].toInt();
+							found_update_info = true;
+						}
+					}
+					else
+					{
+						reportError("platform not found in assets array");
+					}
+				}
+				else
+				{
+					reportError("data is not an array");
+				}
+			}
+			else if (doc_object.contains("assets") && doc_object["assets"].isArray()) // <LL> Logic that works if the response came from GitHub API.
+			{
+				const QJsonArray assets_array(doc_object["assets"].toArray());
+				if (!assets_array.isEmpty())
 				{
 					QJsonObject best_asset;
 					int best_asset_score = 0;
 
-					// search for usable files
-					for (const QJsonValue& asset_value : platform_array)
+					for (const QJsonValue& asset_value : assets_array)
 					{
 						const QJsonObject asset_object(asset_value.toObject());
-						const QJsonArray additional_tags_array(asset_object["additionalTags"].toArray());
-						bool is_symbols = false;
-						bool is_installer = false;
-						bool is_avx2 = false;
-						bool is_sse4 = false;
-						bool is_perfect_match = false;
-						for (const QJsonValue& additional_tag : additional_tags_array)
+						const QString name = asset_object["name"].toString();
+						const QString url = asset_object["browser_download_url"].toString();
+
+						QString lowered = name.toLower();
+						if (lowered.isEmpty())
+							lowered = url.toLower();
+
+						bool is_platform = false;
+						if (QStringLiteral(UPDATE_PLATFORM_STR) == QStringLiteral("Linux"))
 						{
-							const QString additional_tag_str(additional_tag.toString());
-							if (additional_tag_str == QStringLiteral("symbols"))
-							{
-								// we're not interested in symbols downloads
-								is_symbols = true;
-								break;
-							}
-							if (additional_tag_str == QStringLiteral("installer"))
-							{
-								// we're not interested in installer download
-								is_installer = true;
-								break;
-							}
-							else if (additional_tag_str == QStringLiteral("SSE4"))
-							{
-								is_sse4 = true;
-							}
-							else if (additional_tag_str == QStringLiteral("AVX2"))
-							{
-								is_avx2 = true;
-							}
-#ifdef UPDATE_ADDITIONAL_TAGS
-							if (additional_tag_str == QStringLiteral(UPDATE_ADDITIONAL_TAGS))
-							{
-								// Found the same variant as what's currently running!  But keep checking in case it's symbols.
-								is_perfect_match = true;
-							}
-#endif
+							if (lowered.contains("-linux-appimage") || lowered.contains("-linux-flatpak")) // <LL> These should actually be treated separately but idk how, PCSX2 just has Linux platform in the code.
+								is_platform = true;
 						}
+						else if (QStringLiteral(UPDATE_PLATFORM_STR) == QStringLiteral("MacOS"))
+						{
+							if (lowered.contains("-macos"))
+								is_platform = true;
+						}
+						else if (QStringLiteral(UPDATE_PLATFORM_STR) == QStringLiteral("Windows"))
+						{
+							if (lowered.contains("-windows"))
+								is_platform = true;
+						}
+
+						if (!is_platform)
+							continue;
+
+						bool is_symbols = lowered.contains("-symbols");
+						bool is_installer = lowered.contains("-installer");
+						bool is_sse4 = lowered.contains("-sse4");
+						bool is_avx2 = lowered.contains("-avx2");
+						bool is_perfect_match = false;
+
+#ifdef UPDATE_ADDITIONAL_TAGS
+						if (lowered.contains(QStringLiteral(UPDATE_ADDITIONAL_TAGS).toLower()))
+						{
+							// Found the same variant as what's currently running!  But keep checking in case it's symbols.
+							is_perfect_match = true;
+						}
+#endif
 
 						if (is_symbols)
-						{
-							// skip this asset
 							continue;
-						}
-
 						if (is_installer)
-						{
-							// skip this asset
 							continue;
-						}
 #ifdef _M_X86
 						if (is_avx2 && cpuinfo_has_x86_avx2())
 						{
@@ -324,7 +432,7 @@ void AutoUpdaterDialog::getLatestReleaseComplete(s32 status_code, std::vector<u8
 
 						if (score > best_asset_score)
 						{
-							best_asset = std::move(asset_object);
+							best_asset = asset_object;
 							best_asset_score = score;
 						}
 					}
@@ -335,21 +443,21 @@ void AutoUpdaterDialog::getLatestReleaseComplete(s32 status_code, std::vector<u8
 					}
 					else
 					{
-						m_latest_version = data_object["version"].toString();
-						m_latest_version_timestamp = QDateTime::fromString(data_object["publishedAt"].toString(), QStringLiteral("yyyy-MM-ddThh:mm:ss.zzzZ"));
-						m_download_url = best_asset["url"].toString();
+						m_latest_version = doc_object["tag_name"].toString();
+						m_latest_version_timestamp = QDateTime::fromString(doc_object["published_at"].toString(), Qt::ISODate);
+						m_download_url = best_asset["browser_download_url"].toString();
 						m_download_size = best_asset["size"].toInt();
 						found_update_info = true;
 					}
 				}
 				else
 				{
-					reportError("platform not found in assets array");
+					reportError("assets array is empty");
 				}
 			}
 			else
 			{
-				reportError("data is not an array");
+				reportError("JSON is not a recognized release object");
 			}
 		}
 		else

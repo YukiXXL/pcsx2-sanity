@@ -2304,7 +2304,7 @@ void EmuFolders::LoadConfig(SettingsInterface& si)
 	MemoryCards = LoadPathFromSettings(si, DataRoot, "MemoryCards", "memcards");
 	Logs = LoadPathFromSettings(si, DataRoot, "Logs", "logs");
 	Cheats = LoadPathFromSettings(si, DataRoot, "Cheats", "cheats");
-	Patches = LoadPathFromSettings(si, DataRoot, "Patches", "patches");
+	Patches = LoadPathFromSettings(si, AppRoot, "Patches", "patches"); // <LL> Use AppRoot for our custom patches.
 	Covers = LoadPathFromSettings(si, DataRoot, "Covers", "covers");
 	GameSettings = LoadPathFromSettings(si, DataRoot, "GameSettings", "gamesettings");
 	UserResources = LoadPathFromSettings(si, DataRoot, "UserResources", "resources");

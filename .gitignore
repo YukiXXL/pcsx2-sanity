@@ -75,7 +75,7 @@ oprofile_data/
 /bin/bios
 /bin/cache
 /bin/cheats
-/bin/patches
+# /bin/patches # <LL> We want our patches to be included in the builds and releases
 /bin/covers
 /bin/dumps
 /bin/gamesettings

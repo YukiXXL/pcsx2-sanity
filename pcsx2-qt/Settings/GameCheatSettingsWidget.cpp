@@ -61,8 +61,10 @@ GameCheatSettingsWidget::GameCheatSettingsWidget(SettingsWindow* settings_dialog
 	});
 	connect(dialog(), &SettingsWindow::discSerialChanged, this, &GameCheatSettingsWidget::reloadList);
 
-	dialog()->registerWidgetHelp(m_ui.allCRCsCheckbox, tr("Show Cheats For All CRCs"), tr("Checked"),
-		tr("Toggles scanning patch files for all CRCs of the game. With this enabled available patches for the game serial with different CRCs will also be loaded."));
+	dialog()->registerWidgetHelp(m_ui.allCRCsCheckbox, tr("Show Cheats For All CRCs"), tr("Checked"), // <LL> Added notice about the forced disabling of this setting.
+		tr("Toggles scanning patch files for all CRCs of the game. With this enabled available patches for the game serial with different CRCs will also be loaded. "
+		   "<br>WARNING: This setting is intentionally ignored in PCSX2-Sanity, it will always act as if it was disabled. It was causing more issues than it was helping. "
+		   "In our case, most pre-release Jak builds get the serial 'X', so from this setting's perspective they were all the exact same games. Which was wrong."));
 }
 
 GameCheatSettingsWidget::~GameCheatSettingsWidget() = default;

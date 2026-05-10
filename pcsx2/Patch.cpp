@@ -114,6 +114,9 @@ namespace Patch
 	// Name of patches which will be auto-enabled based on global options.
 	static constexpr std::string_view WS_PATCH_NAME = "Widescreen 16:9";
 	static constexpr std::string_view NI_PATCH_NAME = "No-Interlacing";
+	static constexpr std::string_view TOOL_PATCH_NAME = "TOOL"; // <LL> Remember to keep these in sync with the values in GamePatchSettingsWidget.cpp, because I am too fool to make a constant or something.
+	static constexpr std::string_view TOOL_WS_PATCH_NAME = "Widescreen 16:9 TOOL"; // <LL>
+	static constexpr std::string_view TOOL_NI_PATCH_NAME = "No-Interlacing TOOL"; // <LL>
 	static constexpr std::string_view PATCHES_ZIP_NAME = "patches.zip";
 
 	const char* PATCHES_CONFIG_SECTION = "Patches";
@@ -569,7 +572,7 @@ std::vector<Patch::PatchInfo> Patch::GetPatchInfo(const std::string_view serial,
 	if (num_unlabelled_patches)
 		*num_unlabelled_patches = 0;
 
-	EnumeratePnachFiles(serial, crc, cheats, showAllCRCS,
+	EnumeratePnachFiles(serial, crc, cheats, false, // showAllCRCS, // <LL> Force disabled due to lot of conflicts and issues.
 		[&ret, num_unlabelled_patches](const std::string& filename, const std::string& pnach_data) {
 			ExtractPatchInfo(&ret, pnach_data, num_unlabelled_patches);
 		});
@@ -594,7 +597,7 @@ void Patch::ReloadEnabledLists()
 	const std::vector<std::string> disabled_patches = Host::GetStringListSetting(PATCHES_CONFIG_SECTION, PATCH_DISABLE_CONFIG_KEY);
 
 	// Name based matching for widescreen/NI settings.
-	if (EmuConfig.EnableWideScreenPatches)
+	if (EmuConfig.EnableWideScreenPatches && !EmuConfig.Cpu.ExtraMemory) // <LL>
 	{
 		if (std::none_of(s_enabled_patches.begin(), s_enabled_patches.end(),
 				[](const std::string& it) { return (it == WS_PATCH_NAME); }))
@@ -602,12 +605,39 @@ void Patch::ReloadEnabledLists()
 			s_enabled_patches.emplace_back(WS_PATCH_NAME);
 		}
 	}
-	if (EmuConfig.EnableNoInterlacingPatches)
+	else if (EmuConfig.EnableWideScreenPatches && EmuConfig.Cpu.ExtraMemory) // <LL>
+	{
+		if (std::none_of(s_enabled_patches.begin(), s_enabled_patches.end(),
+				[](const std::string& it) { return (it == TOOL_WS_PATCH_NAME); }))
+		{
+			s_enabled_patches.emplace_back(TOOL_WS_PATCH_NAME);
+		}
+	}
+
+	if (EmuConfig.EnableNoInterlacingPatches && !EmuConfig.Cpu.ExtraMemory) // <LL>
 	{
 		if (std::none_of(s_enabled_patches.begin(), s_enabled_patches.end(),
 				[](const std::string& it) { return (it == NI_PATCH_NAME); }))
 		{
 			s_enabled_patches.emplace_back(NI_PATCH_NAME);
+		}
+	}
+	else if (EmuConfig.EnableNoInterlacingPatches && EmuConfig.Cpu.ExtraMemory) // <LL>
+	{
+		if (std::none_of(s_enabled_patches.begin(), s_enabled_patches.end(),
+				[](const std::string& it) { return (it == TOOL_NI_PATCH_NAME); }))
+		{
+			s_enabled_patches.emplace_back(TOOL_NI_PATCH_NAME);
+		}
+	}
+
+	// <LL> TOOL patches
+	if (EmuConfig.Cpu.ExtraMemory)
+	{
+		if (std::none_of(s_enabled_patches.begin(), s_enabled_patches.end(),
+				[](const std::string& it) { return (it == TOOL_PATCH_NAME); }))
+		{
+			s_enabled_patches.emplace_back(TOOL_PATCH_NAME);
 		}
 	}
 
@@ -724,7 +754,7 @@ void Patch::ReloadPatches(const std::string& serial, u32 crc, bool reload_files,
 	{
 		s_gamedb_patches.clear();
 
-		const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(serial);
+		const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(serial, fmt::format("{:08X}", crc)); // <LL>
 		if (game)
 		{
 			const std::string* patches = game->findPatch(crc);
