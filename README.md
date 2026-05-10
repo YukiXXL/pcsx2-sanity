@@ -1,3 +1,33 @@
+# PCSX2-Sanity
+
+A modified build of PCSX2 that incorporates changes that would be rejected from the parent repository. Only Jak and Daxter things for now, but can be used for anything.
+
+If you have any changes that you think would improve the emulator but would get rejected (or did already get rejected) from the parent repository, feel free to open a pull request, or contact the maintainer of pcsx2-sanity: [LuminarLight](https://github.com/LuminarLight)
+
+### Current divergences from parent repository
+- Included 'Sanity' in the application's name at most places.
+- Reworked the auto-updater. It no longer exclusively relies on the unique API on the PCSX2 website, it now also supports GitHub API.
+- If a 'DRIVERS\FIREWIRE.IRX' or a 'DISKINFO.BIN' file exists on the disc, then it will be treated as the main ELF for booting and CRC purposes. If neither are found, the old behaviour will be used (looking up 'SYSTEM.CNF' and getting ELF path from there). This had to be done because in Jak pre-release builds, the "official" ELF is just a loader for these files, and this loader is usually fully identical between different pre-release builds of the same Jak game, which means they also have same CRC, making patches and everything impossible. But the FIREWIRE.IRX and DISKINFO.BIN files are (almost always) unique, allowing us to uniquely identify these builds. A nice side-effect of booting these files directly is that we completely bypass the WIBU protection.
+- Imported and reworked the Jak Debug Mode patches from the [128MB Build](https://github.com/xTVaser/pcsx2-rr/tree/128mb-build) (the author field was filled where it was determinable, otherwise it was left empty - please contact me if there are any mistakes in this.
+-- Numerous new Debug Mode patches have also been added, on top of the ones that were already in the 128MB Build.
+- When the 'Advanced->Enable Extended RAM (Dev Console)' setting is enabled, all patches labelled as `[TOOL]` will be automatically loaded.
+-- When a Jak game is booted in Debug Mode, the memory changes significantly. This means that patches made for the game running in normal mode corrupt the game when running in Debug Mode. So if the above setting is enabled, the emulator will attempt to load patches with `Widescreen 16:9 TOOL` and `No-Interlacing TOOL` labels instead of their TOOL-less counterparts, but only if all other conditions are met (for example the setting that force-loads widescreen patches).
+- When you look at the patches of a game, normally it doesn't indicate whether a patch would get auto-loaded due to global settings or not. Now there is an indicator for this - if a patch will get loaded due to global settings, it will be highlighted in green in the list. This is especially useful if you want to have a clear picture when you are using the patch segregation features.
+- GitHub releases for the project are no longer automatic. I think manual is better for a project like this.
+- Assign serial code 'X' to ISOs where we treat FIREWIRE.IRX or DISKINFO.BIN as the main ELF. Because per-game settings for some reason don't work if the serial is empty.
+- Made the 'Show Cheats For All CRCs' and 'Show Patches For All CRCs' settings never work, because it was causing big issues and I do not believe that it would ever be useful for anything. So as a safeguard, I have made it act as disabled regardless of the actual setting.
+- Added gamefixes for various Jak and Daxter pre-release builds, into GameIndex.yaml. The parent repository does not allow such gamefixes to be included, so we had to do it here.
+- Made the 'patches' directory always be checked from the app root. We had to do this, because we ship patches in that folder and it is next to the executable.
+
+### Plans/TODO:
+- Properly get the serial even if we use FIREWIRE.IRX or DISKINFO.BIN as main ELF for an ISO.
+- Prevent non-labelled patches. This is PCSX2-Sanity, we can expect our users to adapt their pnach files. In most cases they just have to add one line to the top of the file.
+- Readd the ability to broadcast a custom message into the auto-updater window. It could be useful.
+
+
+And here is the parent's README:
+---
+
 # PCSX2
 
 ![Windows Build Status](https://img.shields.io/github/actions/workflow/status/PCSX2/pcsx2/windows_build_matrix.yml?label=%F0%9F%96%A5%EF%B8%8F%20Windows%20Builds)
