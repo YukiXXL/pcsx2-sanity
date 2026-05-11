@@ -50,7 +50,7 @@ C6124FF2:
     autoFlush: 2 # Fixes gate warp effect and emissive texture effects.
 4FF025AF:
   name: "Jak II: Renegade [July 2003 Preview]"
-  region: "PAL"
+  region: "PAL-M"
   gsHWFixes:
     halfPixelOffset: 4 # Aligns post-processing.
     nativeScaling: 2 # Fixes post effects.
@@ -59,7 +59,7 @@ C6124FF2:
     autoFlush: 2 # Fixes lighting.
 C71BAB1E:
   name: "Jak II: Renegade [August 2003 Review]"
-  region: "PAL"
+  region: "PAL-M"
   gsHWFixes:
     halfPixelOffset: 4 # Aligns post-processing.
     nativeScaling: 2 # Fixes post effects.
@@ -80,7 +80,7 @@ C71BAB1E:
     nativeScaling: 2 # Fixes lighting effects due to upscaling.
 A6630572:
   name: "Jak 3 [September 2004 Preview]"
-  region: "PAL"
+  region: "PAL-M"
   gameFixes:
     - InstantDMAHack # Fixes holes in face geometry.
   gsHWFixes:
