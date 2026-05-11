@@ -1031,17 +1031,14 @@ const GameDatabaseSchema::GameEntry* GameDatabase::findGame(const std::string_vi
 {
 	GameDatabase::ensureLoaded();
 
-	if (serial == "X") // <LL> Handle situation where our serial is X, which means it is special.
-	{
-		Console.WriteLn(Color_Magenta, fmt::format("SERIAL IS X, crc is {}.", crc));
-		auto iter = s_game_db.find(StringUtil::toLower(crc));
-		return (iter != s_game_db.end()) ? &iter->second : nullptr;
-	}
-	else
-	{
-		auto iter = s_game_db.find(StringUtil::toLower(serial));
-		return (iter != s_game_db.end()) ? &iter->second : nullptr;
-	}
+	const std::string combined = StringUtil::toLower(std::string(serial) + "_" + std::string(crc)); // <LL> Acknowledge combined entries, some games have same serial but different CRCs.
+	auto iter = s_game_db.find(combined);
+	if (iter != s_game_db.end())
+		return &iter->second;
+
+	const std::string serial_key = StringUtil::toLower(std::string(serial));
+	iter = s_game_db.find(serial_key);
+	return (iter != s_game_db.end()) ? &iter->second : nullptr;
 }
 
 bool GameDatabase::TrackHash::parseHash(const std::string_view str)
