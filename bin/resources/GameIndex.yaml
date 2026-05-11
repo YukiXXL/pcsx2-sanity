@@ -90,6 +90,18 @@ X_A6630572:
     autoFlush: 2 # Fixes lighting.
     halfPixelOffset: 5 # Aligns post-processing and fixes desert tiles.
     nativeScaling: 2 # Fixes lighting effects due to upscaling.
+X_644CFD03:
+  name: "Jak 3 [September 29 2004 Build]" # No patches yet
+  region: "NTSC-U"
+  gameFixes:
+    - InstantDMAHack # Fixes holes in face geometry.
+  gsHWFixes:
+    recommendedBlendingLevel: 3 # Improves metal reflections and shadow quality.
+    cpuSpriteRenderBW: 4 # Fixes character and water textures.
+    cpuSpriteRenderLevel: 2 # Needed for above.
+    autoFlush: 2 # Fixes lighting.
+    halfPixelOffset: 5 # Aligns post-processing and fixes desert tiles.
+    nativeScaling: 2 # Fixes lighting effects due to upscaling.
 SCUS-97429_57A335D5:
   name: "Jak X - Combat Racing [July 2005 Preview]"
   region: "NTSC-U"
