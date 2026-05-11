@@ -32,7 +32,7 @@
 # -- <LL> Jak and Daxter pre-release builds (by CRC), sorted by build age
 # ---------------------------------------------
 
-3A84D099:
+X_3A84D099:
   name: "Jak and Daxter - The Precursor Legacy [September 2001 Preview]"
   region: "NTSC-U"
   gsHWFixes:
@@ -40,7 +40,7 @@
     cpuSpriteRenderBW: 4 # Fixes character and water textures.
     cpuSpriteRenderLevel: 2 # Needed for above.
     autoFlush: 2 # Fixes gate warp effect and emissive texture effects.
-C6124FF2:
+X_C6124FF2:
   name: "Jak and Daxter - The Precursor Legacy [October 19 2001 Build]"
   region: "NTSC-U"
   gsHWFixes:
@@ -48,7 +48,7 @@ C6124FF2:
     cpuSpriteRenderBW: 4 # Fixes character and water textures.
     cpuSpriteRenderLevel: 2 # Needed for above.
     autoFlush: 2 # Fixes gate warp effect and emissive texture effects.
-4FF025AF:
+X_4FF025AF:
   name: "Jak II: Renegade [July 2003 Preview]"
   region: "PAL-M"
   gsHWFixes:
@@ -57,7 +57,7 @@ C6124FF2:
     cpuSpriteRenderBW: 4 # Fixes character and water textures.
     cpuSpriteRenderLevel: 2 # Needed for above.
     autoFlush: 2 # Fixes lighting.
-C71BAB1E:
+X_C71BAB1E:
   name: "Jak II: Renegade [August 2003 Review]"
   region: "PAL-M"
   gsHWFixes:
@@ -66,7 +66,7 @@ C71BAB1E:
     cpuSpriteRenderBW: 4 # Fixes character and water textures.
     cpuSpriteRenderLevel: 2 # Needed for above.
     autoFlush: 2 # Fixes lighting.
-3828BB66:
+X_3828BB66:
   name: "Jak 3 [July 2004 Internal]"
   region: "NTSC-U"
   gameFixes:
@@ -78,7 +78,7 @@ C71BAB1E:
     autoFlush: 2 # Fixes lighting.
     halfPixelOffset: 5 # Aligns post-processing and fixes desert tiles.
     nativeScaling: 2 # Fixes lighting effects due to upscaling.
-A6630572:
+X_A6630572:
   name: "Jak 3 [September 2004 Preview]"
   region: "PAL-M"
   gameFixes:
@@ -90,7 +90,7 @@ A6630572:
     autoFlush: 2 # Fixes lighting.
     halfPixelOffset: 5 # Aligns post-processing and fixes desert tiles.
     nativeScaling: 2 # Fixes lighting effects due to upscaling.
-57A335D5:
+SCUS-97429_57A335D5:
   name: "Jak X - Combat Racing [July 2005 Preview]"
   region: "NTSC-U"
   speedHacks:
